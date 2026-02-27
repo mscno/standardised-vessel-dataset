@@ -1,0 +1,55 @@
+{
+  "id": "valid_core",
+  "description": "Minimal valid dataset that should export consistently across implementations.",
+  "expect": {
+    "valid": true
+  },
+  "assertions": {
+    "json_paths": {
+      "general.eventType": "NOON",
+      "general.operationType": "SAILING",
+      "general.shipName": "MV Example",
+      "general.imo": "9876543",
+      "general.shipReportingDate": "2025-01-02T15:04:05Z",
+      "portAndRoute.departurePortCode": "SGSIN",
+      "portAndRoute.arrivalPortCode": "NLRTM",
+      "emissions.totalCo2": 10.5
+    },
+    "xml_paths": {
+      "StandardisedVesselDataset/General/EventType": "NOON",
+      "StandardisedVesselDataset/General/OperationType": "SAILING",
+      "StandardisedVesselDataset/General/ShipName": "MV Example",
+      "StandardisedVesselDataset/General/Imo": "9876543",
+      "StandardisedVesselDataset/General/ShipReportingDate": "2025-01-02T15:04:05Z",
+      "StandardisedVesselDataset/PortAndRoute/DeparturePortCode": "SGSIN",
+      "StandardisedVesselDataset/PortAndRoute/ArrivalPortCode": "NLRTM",
+      "StandardisedVesselDataset/Emissions/TotalCo2": "10.5"
+    },
+    "csv_fields": {
+      "EventType": "NOON",
+      "OperationType": "SAILING",
+      "ShipName": "MV Example",
+      "Imo": "9876543",
+      "ShipReportingDate": "2025-01-02T15:04:05.0000000Z",
+      "DeparturePortCode": "SGSIN",
+      "ArrivalPortCode": "NLRTM",
+      "TotalCo2": "10.5"
+    }
+  },
+  "dataset": {
+    "general": {
+      "eventType": "NOON",
+      "operationType": "SAILING",
+      "shipName": "MV Example",
+      "imo": "9876543",
+      "shipReportingDate": "2025-01-02T15:04:05Z"
+    },
+    "portAndRoute": {
+      "departurePortCode": "SGSIN",
+      "arrivalPortCode": "NLRTM"
+    },
+    "emissions": {
+      "totalCo2": 10.5
+    }
+  }
+}

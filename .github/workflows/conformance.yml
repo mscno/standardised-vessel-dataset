@@ -1,0 +1,63 @@
+name: Conformance
+
+on:
+  pull_request:
+    paths:
+      - 'conformance/**'
+      - 'src/go/**'
+      - 'src/dotnet/**'
+      - '.github/workflows/conformance.yml'
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'conformance/**'
+      - 'src/go/**'
+      - 'src/dotnet/**'
+      - '.github/workflows/conformance.yml'
+  workflow_dispatch:
+
+jobs:
+  parity:
+    name: Parity
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.x'
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run conformance parity
+        run: python3 conformance/runner.py --adapters go,dotnet
+
+  benchmark:
+    name: Benchmark
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.x'
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run benchmark suite
+        run: python3 conformance/benchmark.py --adapters go,dotnet --iterations 200

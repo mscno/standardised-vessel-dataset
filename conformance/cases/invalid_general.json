@@ -1,0 +1,20 @@
+{
+  "id": "invalid_general",
+  "description": "Invalid General section for validator parity checks.",
+  "expect": {
+    "valid": false,
+    "expected_errors": [
+      "General.Imo:Imo is required",
+      "General.Imo:Imo must be seven digits.",
+      "General.ShipName:Ship Name is required",
+      "General.ShipReportingDate:Ship Reporting Date (Datetime) must be greater than default."
+    ]
+  },
+  "dataset": {
+    "general": {
+      "imo": "",
+      "shipName": "",
+      "shipReportingDate": "0001-01-01T00:00:00Z"
+    }
+  }
+}

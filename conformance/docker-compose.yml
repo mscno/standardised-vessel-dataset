@@ -1,0 +1,14 @@
+services:
+  conformance:
+    build:
+      context: ..
+      dockerfile: conformance/Dockerfile
+    working_dir: /workspace
+    command: ["python3", "conformance/runner.py", "--adapters", "go,dotnet"]
+
+  benchmark:
+    build:
+      context: ..
+      dockerfile: conformance/Dockerfile
+    working_dir: /workspace
+    command: ["python3", "conformance/benchmark.py", "--adapters", "go,dotnet", "--iterations", "200"]
