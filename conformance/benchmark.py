@@ -25,6 +25,15 @@ ADAPTER_COMMANDS: dict[str, dict[str, Any]] = {
         ],
         "cwd": ROOT,
     },
+    "elixir": {
+        "cmd": [
+            "mix",
+            "run",
+            "--no-start",
+            "../../../conformance/adapters/elixir/adapter.exs",
+        ],
+        "cwd": ROOT / "src" / "elixir" / "svd",
+    },
 }
 
 

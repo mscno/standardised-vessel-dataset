@@ -29,6 +29,15 @@ ADAPTER_COMMANDS: dict[str, dict[str, Any]] = {
         ],
         "cwd": ROOT,
     },
+    "elixir": {
+        "cmd": [
+            "mix",
+            "run",
+            "--no-start",
+            "../../../conformance/adapters/elixir/adapter.exs",
+        ],
+        "cwd": ROOT / "src" / "elixir" / "svd",
+    },
 }
 
 IGNORE_JSON_PATHS = {
@@ -54,7 +63,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--adapters",
         default="go,dotnet",
-        help="Comma separated adapter names to run. Known: go,dotnet",
+        help="Comma separated adapter names to run. Known: go,dotnet,elixir",
     )
     parser.add_argument(
         "--allow-missing-adapters",
@@ -320,7 +329,16 @@ def normalize_assertion_value(value: Any) -> str:
         return "true" if value else "false"
     if value is None:
         return ""
-    return str(value)
+    text = str(value)
+    timestamp = re.fullmatch(r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(\.\d+)?Z", text)
+    if timestamp:
+        fraction = timestamp.group(2) or ""
+        if fraction:
+            fraction = fraction.rstrip("0")
+            if fraction == ".":
+                fraction = ""
+        return f"{timestamp.group(1)}{fraction}Z"
+    return text
 
 
 def compare_assertions(case: dict[str, Any], canonical_per_adapter: dict[str, dict[str, Any]]) -> list[str]:
@@ -367,6 +385,9 @@ def compare_assertions(case: dict[str, Any], canonical_per_adapter: dict[str, di
 def compare_case(case: dict[str, Any], adapter_responses: dict[str, dict[str, Any]]) -> list[str]:
     failures: list[str] = []
     expect_valid = bool(case["expect"]["valid"])
+    parity_config = case.get("parity", {})
+    parity_validate = bool(parity_config.get("validate", expect_valid))
+    parity_exports = bool(parity_config.get("exports", expect_valid))
 
     canonical_per_adapter: dict[str, dict[str, Any]] = {}
 
@@ -427,12 +448,12 @@ def compare_case(case: dict[str, Any], adapter_responses: dict[str, dict[str, An
         for adapter in adapters[1:]:
             current = canonical_per_adapter[adapter]
 
-            if baseline_result["validate"] != current["validate"]:
+            if parity_validate and baseline_result["validate"] != current["validate"]:
                 failures.append(
                     f"parity(validate): {adapter} != {baseline}\n  {baseline}: {baseline_result['validate']}\n  {adapter}: {current['validate']}"
                 )
 
-            if expect_valid:
+            if expect_valid and parity_exports:
                 for op in ("export_json", "export_xml", "export_csv"):
                     if baseline_result[op] != current[op]:
                         failures.append(

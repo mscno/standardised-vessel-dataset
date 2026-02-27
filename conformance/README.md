@@ -8,6 +8,7 @@ This folder contains a shared cross-implementation suite for SVD parity checks a
 - Adapter CLIs per implementation:
   - `conformance/adapters/go`
   - `conformance/adapters/dotnet/Conformance.Adapter`
+  - `conformance/adapters/elixir/adapter.exs`
 - One parity runner that executes the same cases against each adapter and compares canonicalized outputs:
   - `conformance/runner.py`
 - One benchmark runner that executes the same valid cases and reports average per-operation timings:
@@ -30,6 +31,14 @@ If one runtime is missing on your machine, run only the available adapter:
 ```bash
 python3 conformance/runner.py --adapters go
 ```
+
+To include Elixir in local runs:
+
+```bash
+python3 conformance/runner.py --adapters go,dotnet,elixir
+```
+
+The Elixir implementation requires Elixir `~> 1.15` (see `src/elixir/svd/mix.exs`).
 
 ## Docker usage
 
@@ -68,7 +77,9 @@ Each case file must include:
 
 Optional:
 
-- `expect.expected_errors`: exact validator parity expectations for invalid cases
+- `parity.validate`: enable/disable strict cross-adapter validation parity
+- `parity.exports`: enable/disable strict cross-adapter export parity
+- `assertions`: adapter-agnostic assertions for valid export content
 
 ## Notes
 
