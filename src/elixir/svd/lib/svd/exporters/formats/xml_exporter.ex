@@ -87,18 +87,15 @@ defmodule SVD.Exporters.Formats.XMLExporter do
   end
 
   defp parse_xml(payload) do
-    case :xmerl_scan.string(String.to_charlist(payload)) do
+    case :xmerl_scan.string(String.to_charlist(payload), quiet: true) do
       {{:xmlElement, :StandardisedVesselDataset, _, _, _, _, _, _, _, _, _, _} = root, _} ->
         {:ok, root}
 
       {{:xmlElement, _, _, _, _, _, _, _, _, _, _, _}, _} ->
         {:error, :invalid_xml_root}
-
-      _ ->
-        {:error, :invalid_xml_payload}
     end
-  rescue
-    _ -> {:error, :invalid_xml_payload}
+  catch
+    :exit, _ -> {:error, :invalid_xml_payload}
   end
 
   defp parse_section(nil, _section), do: nil
@@ -119,8 +116,6 @@ defmodule SVD.Exporters.Formats.XMLExporter do
 
     struct(section.module, values)
   end
-
-  defp find_child_element(nil, _name), do: nil
 
   defp find_child_element({:xmlElement, _, _, _, _, _, _, _, children, _, _, _}, name) do
     Enum.find(children, fn

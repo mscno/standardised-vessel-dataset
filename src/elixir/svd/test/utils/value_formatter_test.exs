@@ -14,7 +14,9 @@ defmodule SVD.Utils.ValueFormatterTest do
   end
 
   test "to_xml handles nil and primitive values" do
+    dt = DateTime.from_naive!(~N[2026-01-01 12:00:00], "Etc/UTC")
     assert ValueFormatter.to_xml(nil) == nil
+    assert ValueFormatter.to_xml(dt) == DateTime.to_iso8601(dt)
     assert ValueFormatter.to_xml(1) == "1"
     assert ValueFormatter.to_xml(1.5) != ""
     assert ValueFormatter.to_xml(true) == "true"
@@ -26,7 +28,9 @@ defmodule SVD.Utils.ValueFormatterTest do
   end
 
   test "to_csv handles nil and primitive values" do
+    dt = DateTime.from_naive!(~N[2026-01-01 12:00:00], "Etc/UTC")
     assert ValueFormatter.to_csv(nil) == ""
+    assert ValueFormatter.to_csv(dt) == DateTime.to_iso8601(dt)
     assert ValueFormatter.to_csv(1) == "1"
     assert ValueFormatter.to_csv(1.5) != ""
     assert ValueFormatter.to_csv(false) == "false"

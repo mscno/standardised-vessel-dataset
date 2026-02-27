@@ -17,7 +17,12 @@ defmodule SVD.Serializers do
           section.fields
           |> Enum.reduce(%{}, fn {field, type}, section_acc ->
             value = Map.get(section_data, field)
-            Map.put(section_acc, DotNetWire.json_field_name(field), DotNetWire.format_value(value, type, :json))
+
+            Map.put(
+              section_acc,
+              DotNetWire.json_field_name(field),
+              DotNetWire.format_value(value, type, :json)
+            )
           end)
         end
 
@@ -40,15 +45,14 @@ defmodule SVD.Serializers do
       end)
 
     {:ok, StandardisedVesselDataset.new(attrs)}
-  rescue
-    error -> {:error, error}
   end
 
   def from_json_map(_), do: {:error, :invalid_json_payload}
 
   defp parse_json_section(nil, _section), do: nil
 
-  defp parse_json_section(section_payload, %{module: module, fields: fields}) when is_map(section_payload) do
+  defp parse_json_section(section_payload, %{module: module, fields: fields})
+       when is_map(section_payload) do
     values =
       fields
       |> Enum.reduce(%{}, fn {field, type}, acc ->

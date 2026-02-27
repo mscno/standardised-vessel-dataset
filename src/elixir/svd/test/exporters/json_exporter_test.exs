@@ -6,10 +6,6 @@ defmodule SVD.Exporters.JSONExporterTest do
   alias SVD.TestSupport.Faker
   alias SVD.Validators.{StandardisedVesselDatasetValidator, ValidatorException}
 
-  defmodule UnknownStruct do
-    defstruct [:value]
-  end
-
   setup do
     %{exporter: JSONExporter.new(StandardisedVesselDatasetValidator)}
   end
@@ -76,12 +72,41 @@ defmodule SVD.Exporters.JSONExporterTest do
     assert get_in(payload, ["emissions", "totalCo2"]) == Faker.valid_svd().emissions.total_co2
   end
 
-  test "json exporter returns error when payload cannot be encoded", %{exporter: exporter} do
-    svd = %StandardisedVesselDataset{
-      general: Faker.valid_general_information(),
-      cargo: %{__struct__: UnknownStruct, value: 1}
-    }
+  test "json uses dotnet acronym field names", %{exporter: exporter} do
+    assert {:ok, content} = JSONExporter.export_async(exporter, Faker.valid_svd())
+    assert {:ok, payload} = Jason.decode(content.data)
 
-    assert {:error, _} = JSONExporter.export_async(exporter, svd)
+    assert Map.has_key?(payload["cargo"], "totalContainersTEU")
+    assert Map.has_key?(payload["cargo"], "totalVehiclesCEU")
+    assert Map.has_key?(payload["fuelAndBunker"], "fuelGHGIntensityIMOManual")
+    assert Map.has_key?(payload["fuelAndBunker"], "fuelGHGIntensityIMOVoyage")
+  end
+
+  test "decode valid json payload" do
+    payload = """
+    {
+      "general": {
+        "eventType": "NOON",
+        "imo": "1234567",
+        "shipReportingDate": "2026-01-01T12:00:00.0000000Z"
+      },
+      "cargo": {
+        "totalContainersTEU": 10
+      }
+    }
+    """
+
+    assert {:ok, dataset} = JSONExporter.decode(payload)
+    assert dataset.general.event_type == "NOON"
+    assert dataset.general.imo == "1234567"
+    assert dataset.cargo.total_containers_teu == 10
+  end
+
+  test "decode invalid json payload" do
+    assert {:error, _} = JSONExporter.decode("{invalid")
+  end
+
+  test "decode invalid non binary payload" do
+    assert {:error, :invalid_json_payload} = JSONExporter.decode(:bad)
   end
 end

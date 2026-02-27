@@ -437,7 +437,7 @@ defmodule SVD.DotNetWire do
 
   defp format_float(value) do
     value
-    |> :erlang.float_to_binary([:compact, decimals: 15])
+    |> :erlang.float_to_binary([:short])
     |> trim_decimal_zero()
   end
 
@@ -450,7 +450,10 @@ defmodule SVD.DotNetWire do
   end
 
   defp format_datetime_iso(%DateTime{} = value), do: value |> to_utc() |> datetime_7_digits()
-  defp format_datetime_iso(%NaiveDateTime{} = value), do: value |> DateTime.from_naive!("Etc/UTC") |> datetime_7_digits()
+
+  defp format_datetime_iso(%NaiveDateTime{} = value),
+    do: value |> DateTime.from_naive!("Etc/UTC") |> datetime_7_digits()
+
   defp format_datetime_iso(value) when is_binary(value), do: value
   defp format_datetime_iso(_), do: nil
 
@@ -497,7 +500,8 @@ defmodule SVD.DotNetWire do
     minutes = div(rem(remaining_seconds, 3_600), 60)
     seconds = rem(remaining_seconds, 60)
 
-    fraction = div(remaining_nanoseconds, 100) |> Integer.to_string() |> String.pad_leading(7, "0")
+    fraction =
+      div(remaining_nanoseconds, 100) |> Integer.to_string() |> String.pad_leading(7, "0")
 
     hh = hours |> Integer.to_string() |> String.pad_leading(2, "0")
     mm = minutes |> Integer.to_string() |> String.pad_leading(2, "0")
@@ -518,19 +522,114 @@ defmodule SVD.DotNetWire do
   end
 
   defp format_timespan_duration(value) when is_binary(value) do
-    if String.starts_with?(value, "P"), do: value, else: nil
+    cond do
+      String.starts_with?(value, "P") ->
+        value
+
+      true ->
+        case parse_timespan_constant(value) do
+          {:ok, nanoseconds} -> format_duration_from_nanoseconds(nanoseconds)
+          :error -> nil
+        end
+    end
   end
 
-  defp format_timespan_duration(value) when is_integer(value) do
-    seconds = div(value, 1_000_000_000)
-    "PT#{seconds}S"
-  end
+  defp format_timespan_duration(value) when is_integer(value),
+    do: format_duration_from_nanoseconds(value)
 
-  defp format_timespan_duration(value) when is_float(value) do
-    "PT#{round(value)}S"
-  end
+  defp format_timespan_duration(value) when is_float(value),
+    do: format_duration_from_nanoseconds(round(value * 1_000_000_000))
 
   defp format_timespan_duration(_), do: nil
+
+  defp format_duration_from_nanoseconds(nanoseconds) do
+    sign = if nanoseconds < 0, do: "-", else: ""
+    absolute_nanoseconds = abs(nanoseconds)
+
+    total_seconds = div(absolute_nanoseconds, 1_000_000_000)
+    remaining_nanoseconds = rem(absolute_nanoseconds, 1_000_000_000)
+
+    days = div(total_seconds, 86_400)
+    remaining_seconds = rem(total_seconds, 86_400)
+    hours = div(remaining_seconds, 3_600)
+    minutes = div(rem(remaining_seconds, 3_600), 60)
+    seconds = rem(remaining_seconds, 60)
+
+    date_part = if days > 0, do: "#{days}D", else: ""
+
+    time_parts =
+      []
+      |> maybe_add_duration_part(hours, "H")
+      |> maybe_add_duration_part(minutes, "M")
+      |> maybe_add_seconds_duration_part(seconds, remaining_nanoseconds, date_part == "")
+
+    time_part =
+      case time_parts do
+        [] -> ""
+        parts -> "T" <> Enum.join(parts)
+      end
+
+    "#{sign}P#{date_part}#{time_part}"
+  end
+
+  defp maybe_add_duration_part(parts, 0, _unit), do: parts
+  defp maybe_add_duration_part(parts, value, unit), do: parts ++ ["#{value}#{unit}"]
+
+  defp maybe_add_seconds_duration_part(parts, seconds, nanoseconds, force_zero_seconds) do
+    fraction =
+      nanoseconds
+      |> div(100)
+      |> Integer.to_string()
+      |> String.pad_leading(7, "0")
+      |> String.trim_trailing("0")
+
+    include_seconds = seconds > 0 or fraction != "" or (force_zero_seconds and parts == [])
+
+    if include_seconds do
+      seconds_part =
+        if fraction == "" do
+          "#{seconds}S"
+        else
+          "#{seconds}.#{fraction}S"
+        end
+
+      parts ++ [seconds_part]
+    else
+      parts
+    end
+  end
+
+  defp parse_timespan_constant(value) do
+    case Regex.run(
+           ~r/^(-)?(?:(\d+)\.)?(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,7}))?$/,
+           String.trim(value)
+         ) do
+      [_, sign, days, hours, minutes, seconds, fractions] ->
+        days_value = parse_integer(days)
+        hours_value = parse_integer(hours)
+        minutes_value = parse_integer(minutes)
+        seconds_value = parse_integer(seconds)
+
+        ticks_fraction =
+          fractions
+          |> to_string()
+          |> String.pad_trailing(7, "0")
+          |> parse_integer()
+
+        total_seconds =
+          days_value * 86_400 + hours_value * 3_600 + minutes_value * 60 + seconds_value
+
+        total_nanoseconds = total_seconds * 1_000_000_000 + ticks_fraction * 100
+        signed_nanoseconds = if sign == "-", do: -total_nanoseconds, else: total_nanoseconds
+        {:ok, signed_nanoseconds}
+
+      _ ->
+        :error
+    end
+  end
+
+  defp parse_integer(nil), do: 0
+  defp parse_integer(value) when is_binary(value), do: String.to_integer(value)
 
   defp parse_datetime(nil), do: nil
   defp parse_datetime(%DateTime{} = value), do: value
@@ -568,6 +667,4 @@ defmodule SVD.DotNetWire do
   defp decapitalize_first(<<first::utf8, rest::binary>>) do
     <<String.downcase(<<first::utf8>>)::binary, rest::binary>>
   end
-
-  defp decapitalize_first(<<>>), do: ""
 end

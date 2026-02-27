@@ -23,7 +23,9 @@ We invite everyone to contribute to this library and you can see more details be
 This library provides implementations in multiple programming languages to support diverse development environments:
 
 - **C++20**: Modern C++ implementation with comprehensive testing, smart pointer memory management, and cross-platform CMake build system
-- **.NET Core**: Full-featured .NET implementation with extensive validation and export capabilities  
+- **.NET Core**: Full-featured .NET implementation with extensive validation and export capabilities
+- **Go**: Go implementation with exporters, validators, and service provider support
+- **Elixir**: Elixir implementation with model parity, validators, exporters, and high test coverage
 - **TypeScript**: Type-safe JavaScript implementation for web and Node.js environments
 
 
@@ -36,20 +38,29 @@ language, you can find instructions in the corresponding source directory:
 |--------------------------------------|-------------------------------------------------------------|
 | C++                                  | [src/cpp](src/cpp)                                         |
 | .NET Core                            | [src/dotnet](src/dotnet)                                   |
+| Go                                   | [src/go/svd](src/go/svd)                                   |
+| Elixir                               | [src/elixir/svd](src/elixir/svd)                           |
 | TypeScript                           | [src/typescript](src/typescript)                           |
 
 ## Features
 
-| Feature                                         | C++       | .NET Core | TypeScript |
-| ----------------------------------------------- | :-------: | :-------: | :---------: |
-| Typified StandardisedVesselDataset (SVD) models |     ✅     |     ✅     |     ✅      |
-| Validation of SVD input data                    |     ✅     |     ✅     |            |
-| Export of data to XML, CSV, or JSON formats     |     ✅     |     ✅     |            |
+| Feature                                         | C++ | .NET Core | Go | Elixir | TypeScript |
+| ----------------------------------------------- | :-: | :-------: | :-: | :----: | :--------: |
+| Typified StandardisedVesselDataset (SVD) models | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Validation of SVD input data                    | ✅ | ✅ | ✅ | ✅ |  |
+| Export of data to XML, CSV, or JSON formats     | ✅ | ✅ | ✅ | ✅ |  |
 
 ## Supported Output formats
 - XML
 - CSV
 - JSON
+
+## Conformance suite
+Cross-implementation parity and benchmark tooling lives under [conformance](conformance).
+
+- Parity runner: `python3 conformance/runner.py --adapters go,dotnet`
+- Benchmark runner: `python3 conformance/benchmark.py --adapters go,dotnet --iterations 200`
+- Docker and Compose usage: see [conformance/README.md](conformance/README.md)
 
 ## Contributing
 We welcome contributions! If you'd like to contribute to this library, please check out our contribution [guidelines](./CONTRIBUTING.md).

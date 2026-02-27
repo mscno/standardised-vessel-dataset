@@ -65,10 +65,10 @@ defmodule SVD.Exporters.CSVExporterTest do
     headers = parse_csv_row(header_line)
     values = parse_csv_row(data_line)
 
-    assert Enum.any?(headers, &String.contains?(&1, "general.event_type"))
-    assert Enum.any?(headers, &String.contains?(&1, "general.operation_type"))
-    assert Enum.any?(headers, &String.contains?(&1, "general.ship_name"))
-    assert Enum.any?(headers, &String.contains?(&1, "general.imo"))
+    assert "General.EventType" in headers
+    assert "General.OperationType" in headers
+    assert "General.ShipName" in headers
+    assert "General.Imo" in headers
 
     assert Enum.any?(values, &(&1 != ""))
   end
@@ -79,7 +79,65 @@ defmodule SVD.Exporters.CSVExporterTest do
     [header_line | _] = content.data |> String.trim() |> String.split("\n")
     headers = parse_csv_row(header_line)
 
-    assert "emissions.total_co2" in headers
+    assert "Emissions.TotalCo2" in headers
+  end
+
+  test "csv uses dotnet acronym field names", %{exporter: exporter} do
+    assert {:ok, content} = CSVExporter.export_async(exporter, Faker.valid_svd())
+
+    [header_line | _] = content.data |> String.trim() |> String.split("\n")
+    headers = parse_csv_row(header_line)
+
+    assert "Cargo.TotalContainersTEU" in headers
+    assert "Cargo.TotalVehiclesCEU" in headers
+    assert "FuelAndBunker.FuelGHGIntensityIMOManual" in headers
+    assert "FuelAndBunker.FuelGHGIntensityIMOVoyage" in headers
+  end
+
+  test "decode valid csv payload" do
+    payload = """
+    General.EventType,General.Imo,General.ShipReportingDate,Cargo.TotalContainersTEU
+    NOON,1234567,2026-01-01T12:00:00.0000000Z,10
+    """
+
+    assert {:ok, dataset} = CSVExporter.decode(payload)
+    assert dataset.general.event_type == "NOON"
+    assert dataset.general.imo == "1234567"
+    assert dataset.cargo.total_containers_teu == 10
+  end
+
+  test "decode invalid csv payload" do
+    assert {:error, :invalid_csv_payload} = CSVExporter.decode("header-only")
+  end
+
+  test "decode invalid non-binary payload" do
+    assert {:error, :invalid_csv_payload} = CSVExporter.decode(:bad)
+  end
+
+  test "decode handles quoted values with commas and escaped quotes" do
+    payload = """
+    General.EventType,General.OperationDescription,General.Imo
+    NOON,"Heavy weather, rerouted ""north\""",1234567
+    """
+
+    assert {:ok, dataset} = CSVExporter.decode(payload)
+    assert dataset.general.operation_description == ~s(Heavy weather, rerouted "north")
+    assert dataset.general.imo == "1234567"
+  end
+
+  test "decode supports CRLF and CR line endings" do
+    crlf = "General.EventType,General.Imo\r\nNOON,1234567\r\n"
+    assert {:ok, dataset_crlf} = CSVExporter.decode(crlf)
+    assert dataset_crlf.general.event_type == "NOON"
+
+    cr = "General.EventType,General.Imo\rNOON,1234567\r"
+    assert {:ok, dataset_cr} = CSVExporter.decode(cr)
+    assert dataset_cr.general.event_type == "NOON"
+  end
+
+  test "decode rejects unterminated quoted field" do
+    payload = "General.EventType\n\"NOON"
+    assert {:error, :invalid_csv_payload} = CSVExporter.decode(payload)
   end
 
   defp parse_csv_row(row) do

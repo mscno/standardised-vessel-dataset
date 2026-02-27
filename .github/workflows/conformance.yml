@@ -1,28 +1,119 @@
-name: Conformance
+name: CI Tests And Conformance
 
 on:
   pull_request:
-    paths:
-      - 'conformance/**'
-      - 'src/go/**'
-      - 'src/dotnet/**'
-      - 'src/elixir/**'
-      - '.github/workflows/conformance.yml'
+    types: [ opened, reopened, synchronize, edited ]
   push:
     branches: [ "main" ]
-    paths:
-      - 'conformance/**'
-      - 'src/go/**'
-      - 'src/dotnet/**'
-      - 'src/elixir/**'
-      - '.github/workflows/conformance.yml'
   workflow_dispatch:
 
 jobs:
-  parity:
-    name: Parity
+  go-tests:
+    name: Go Tests
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.x'
+
+      - name: Run Go tests
+        working-directory: src/go/svd
+        run: go test ./...
+
+  dotnet-tests:
+    name: .NET Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Run .NET tests
+        run: |
+          dotnet restore src/dotnet/StandardisedVesselDataset.sln
+          dotnet test src/dotnet/StandardisedVesselDataset.sln --no-restore --verbosity normal
+
+  elixir-tests:
+    name: Elixir Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: '27.0'
+          elixir-version: '1.17.3'
+
+      - name: Install Elixir dependencies
+        working-directory: src/elixir/svd
+        run: |
+          mix local.hex --force
+          mix local.rebar --force
+          mix deps.get
+
+      - name: Run Elixir tests
+        working-directory: src/elixir/svd
+        run: mix test
+
+  cpp-tests:
+    name: C++ Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: cmake -S src/cpp -B src/cpp/build -DSVD_BUILD_TESTS=ON -DSVD_BUILD_EXAMPLES=OFF
+
+      - name: Build C++ tests
+        run: cmake --build src/cpp/build --config Release
+
+      - name: Run C++ tests
+        run: ctest --test-dir src/cpp/build --output-on-failure
+
+  typescript-build:
+    name: TypeScript Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.11.1'
+
+      - name: Build TypeScript package
+        working-directory: src/typescript
+        run: |
+          yarn install
+          yarn clean
+          yarn build
+
+  protobuf-validate:
+    name: Protobuf Schema Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install protoc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+
+      - name: Validate protobuf schema
+        run: |
+          protoc \
+            --proto_path=src/protobuf \
+            --include_imports \
+            --descriptor_set_out=/tmp/svd.pb \
+            src/protobuf/svd/v1/svd.proto
+
+  conformance-parity:
+    name: Conformance Parity
+    runs-on: ubuntu-latest
+    needs: [go-tests, dotnet-tests, elixir-tests]
     steps:
       - uses: actions/checkout@v4
 
@@ -50,14 +141,13 @@ jobs:
           mix local.rebar --force
           mix deps.get
 
-      - name: Run conformance parity
+      - name: Run conformance parity suite
         run: python3 conformance/runner.py --adapters go,dotnet,elixir
 
-  benchmark:
-    name: Benchmark
+  conformance-benchmark:
+    name: Conformance Benchmark
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 

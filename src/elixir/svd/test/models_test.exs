@@ -2,7 +2,14 @@ defmodule SVD.ModelsTest do
   use ExUnit.Case, async: true
 
   alias SVD.Models
-  alias SVD.Models.{GeneralInformation, StandardisedVesselDataset}
+
+  alias SVD.Models.{
+    CargoInformation,
+    Emissions,
+    GeneralInformation,
+    StandardisedVesselDataset,
+    WeatherInformation
+  }
 
   test "sections and section lookup" do
     sections = Models.sections()
@@ -59,5 +66,17 @@ defmodule SVD.ModelsTest do
   test "standardised vessel dataset new handles unsupported section values" do
     dataset = StandardisedVesselDataset.new(%{general: :unsupported})
     assert dataset.general == nil
+  end
+
+  test "module field definitions are exposed" do
+    assert :cargo_description in CargoInformation.fields()
+    assert :total_co2 in Emissions.fields()
+    assert :weather_remarks in WeatherInformation.fields()
+  end
+
+  test "domain structs can be instantiated with defaults" do
+    assert %CargoInformation{} = struct(CargoInformation)
+    assert %Emissions{} = struct(Emissions)
+    assert %WeatherInformation{} = struct(WeatherInformation)
   end
 end

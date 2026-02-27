@@ -1,12 +1,8 @@
 defmodule SVD.SerializersTest do
   use ExUnit.Case, async: true
 
-  alias SVD.Models.{GeneralInformation, StandardisedVesselDataset}
+  alias SVD.Models.{CargoInformation, GeneralInformation, StandardisedVesselDataset}
   alias SVD.Serializers
-
-  defmodule UnknownStruct do
-    defstruct [:value]
-  end
 
   test "serialize dataset to json map" do
     dataset =
@@ -16,63 +12,68 @@ defmodule SVD.SerializersTest do
           imo: "1234567",
           ship_reporting_date: DateTime.utc_now() |> DateTime.truncate(:second)
         },
-        emissions: nil
+        cargo: %CargoInformation{
+          total_containers_teu: 10,
+          total_vehicles_ceu: 5
+        }
       }
 
     payload = Serializers.to_json_map(dataset)
 
     assert get_in(payload, ["general", "eventType"]) == "NOON"
     assert get_in(payload, ["general", "imo"]) == "1234567"
-    assert Map.has_key?(payload, "emissions")
+    assert get_in(payload, ["cargo", "totalContainersTEU"]) == 10
+    assert get_in(payload, ["cargo", "totalVehiclesCEU"]) == 5
   end
 
-  test "serializer handles unknown struct values" do
-    dataset =
-      %StandardisedVesselDataset{
-        general: %GeneralInformation{
-          event_type: "NOON",
-          imo: "1234567",
-          ship_reporting_date: DateTime.utc_now()
-        },
-        cargo: %{__struct__: UnknownStruct, value: 1}
+  test "deserialize dotnet-shaped json map to dataset" do
+    payload = %{
+      "general" => %{
+        "eventType" => "NOON",
+        "imo" => "1234567",
+        "shipReportingDate" => "2026-01-01T12:00:00.0000000Z"
+      },
+      "cargo" => %{
+        "totalContainersTEU" => 10,
+        "totalVehiclesCEU" => 5
+      },
+      "fuelAndBunker" => %{
+        "fuelGHGIntensityIMOManual" => 1.2,
+        "fuelGHGIntensityIMOVoyage" => 1.1
       }
+    }
 
-    payload = Serializers.to_json_map(dataset)
-    assert payload["cargo"] == %UnknownStruct{value: 1}
+    assert {:ok, dataset} = Serializers.from_json_map(payload)
+
+    assert dataset.general.event_type == "NOON"
+    assert dataset.general.imo == "1234567"
+    assert %DateTime{} = dataset.general.ship_reporting_date
+    assert dataset.cargo.total_containers_teu == 10
+    assert dataset.cargo.total_vehicles_ceu == 5
+    assert dataset.fuel_and_bunker.fuel_ghg_intensity_imo_manual == 1.2
+    assert dataset.fuel_and_bunker.fuel_ghg_intensity_imo_voyage == 1.1
   end
 
-  test "serializer handles list values in nested struct" do
-    dataset =
-      %StandardisedVesselDataset{
-        general: %GeneralInformation{
-          event_type: "NOON",
-          imo: "1234567",
-          ship_reporting_date: DateTime.utc_now(),
-          ship_owner: ["A", "B"]
-        }
+  test "deserialize supports pascal case keys" do
+    payload = %{
+      "General" => %{
+        "EventType" => "NOON",
+        "Imo" => "1234567"
       }
+    }
 
-    payload = Serializers.to_json_map(dataset)
-    assert get_in(payload, ["general", "shipOwner"]) == ["A", "B"]
+    assert {:ok, dataset} = Serializers.from_json_map(payload)
+    assert dataset.general.event_type == "NOON"
+    assert dataset.general.imo == "1234567"
   end
 
-  test "serializer handles naive/date/time values" do
-    dataset =
-      %StandardisedVesselDataset{
-        general: %GeneralInformation{
-          event_type: "NOON",
-          imo: "1234567",
-          ship_reporting_date: DateTime.utc_now(),
-          operation_description: ~N[2026-01-01 12:00:00],
-          performance_report_type: ~D[2026-01-01],
-          voyage_remarks: ~T[12:30:45]
-        }
-      }
+  test "deserialize rejects non map payload" do
+    assert {:error, :invalid_json_payload} = Serializers.from_json_map("bad")
+  end
 
-    payload = Serializers.to_json_map(dataset)
-
-    assert get_in(payload, ["general", "operationDescription"]) == "2026-01-01T12:00:00"
-    assert get_in(payload, ["general", "performanceReportType"]) == "2026-01-01"
-    assert get_in(payload, ["general", "voyageRemarks"]) == "12:30:45"
+  test "deserialize treats non-map section payloads as nil" do
+    payload = %{"general" => "bad-section"}
+    assert {:ok, dataset} = Serializers.from_json_map(payload)
+    assert dataset.general == nil
   end
 end

@@ -16,18 +16,14 @@ defmodule SVD.Exporters.Formats.JSONExporter do
           {:ok, StandardisedVesselDatasetContent.t()} | {:error, term()}
   def export_async(%__MODULE__{validator: validator_module}, svd, _ctx \\ nil) do
     BaseExporter.validate_and_export(validator_module, svd, fn dataset ->
-      case Jason.encode(Serializers.to_json_map(dataset), pretty: true) do
-        {:ok, json} ->
-          {:ok,
-           StandardisedVesselDatasetContent.new(
-             json,
-             Helpers.file_name(dataset, "json"),
-             "application/json"
-           )}
+      json = Jason.encode!(Serializers.to_json_map(dataset), pretty: true)
 
-        {:error, error} ->
-          {:error, error}
-      end
+      {:ok,
+       StandardisedVesselDatasetContent.new(
+         json,
+         Helpers.file_name(dataset, "json"),
+         "application/json"
+       )}
     end)
   end
 
