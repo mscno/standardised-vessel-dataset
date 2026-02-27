@@ -1,0 +1,261 @@
+syntax = "proto3";
+
+package svd.v1;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+option csharp_namespace = "StandardisedVesselDataset.Protobuf.V1";
+option go_package = "github.com/WMS-Ceataec/standardised-vessel-dataset/src/protobuf/svd/v1;svdv1";
+
+// Canonical SVD envelope.
+message StandardisedVesselDataset {
+  GeneralInformation general = 1;
+  PortInformation port_and_route = 2;
+  ArrivalTimes arrival_times = 3;
+  DeviationFromPlanned deviation_from_planned = 4;
+  SpeedAndDistance speed_and_distance = 5;
+  WeatherInformation weather = 6;
+  FreshWater fresh_water = 7;
+  ElectricityConsumption electricity_consumption = 8;
+  CargoInformation cargo = 9;
+  FuelAndBunkerInformation fuel_and_bunker = 10;
+  Emissions emissions = 11;
+  CylinderLubeOilInformation cylinder_lube_oil = 12;
+}
+
+message GeneralInformation {
+  string event_type = 1;
+  string operation_type = 2;
+  string operation_description = 3;
+  string performance_report_type = 4;
+  google.protobuf.Duration elapsed_time = 5;
+  double ship_latitude = 6;
+  double ship_longitude = 7;
+  google.protobuf.Timestamp ship_reporting_date = 8;
+  string ship_flag_state = 9;
+  string ship_registry_port_code = 10;
+  string ship_registry_port_name = 11;
+  string ship_name = 12;
+  string imo = 13;
+  string mmsi = 14;
+  string ship_type = 15;
+  string ship_type_marpol_annex_vi = 16;
+  int32 number_of_passengers = 17;
+  int32 number_of_crew = 18;
+  string voyage_number = 19;
+  string voyage_remarks = 20;
+  string voyage_leg_identifier = 21;
+  string voyage_leg_remarks = 22;
+
+  // Compatibility fields currently present in C++/Go implementations.
+  string call_sign = 23;
+  double deadweight = 24;
+  double gross_tonnage = 25;
+  double net_tonnage = 26;
+  string ship_owner = 27;
+  string ship_manager = 28;
+  string charterer = 29;
+  double length_overall = 30;
+  double beam = 31;
+  double depth = 32;
+}
+
+message PortInformation {
+  string departure_port_code = 1;
+  string departure_port_name = 2;
+  string arrival_port_code = 3;
+  string arrival_port_name = 4;
+  string inbound_port_jurisdiction_code = 5;
+  string outbound_port_jurisdiction_code = 6;
+  string pilot_boarding_place_name = 7;
+  string pilot_boarding_place_location = 8;
+  string berth_name = 9;
+
+  // Compatibility fields currently present in C++/Go implementations.
+  string route_code = 10;
+  string route_description = 11;
+  double planned_distance = 12;
+}
+
+message ArrivalTimes {
+  google.protobuf.Timestamp arrival = 1;
+  google.protobuf.Timestamp departure = 2;
+  google.protobuf.Timestamp location_eta = 3;
+  google.protobuf.Timestamp location_actual = 4;
+  google.protobuf.Timestamp pilot_boarding_place_eta = 5;
+  google.protobuf.Timestamp pilot_boarding_place_actual = 6;
+  google.protobuf.Timestamp vts_eta = 7;
+  google.protobuf.Timestamp vts_actual = 8;
+  google.protobuf.Timestamp next_port_eta = 9;
+  int32 voyage_time = 10;
+
+  // Compatibility fields currently present in C++/Go implementations.
+  google.protobuf.Timestamp estimated_time_of_arrival = 11;
+  google.protobuf.Timestamp actual_time_of_arrival = 12;
+  google.protobuf.Timestamp planned_time_of_departure = 13;
+  google.protobuf.Timestamp actual_time_of_departure = 14;
+}
+
+message DeviationFromPlanned {
+  string reason = 1;
+  double latitude = 2;
+  double longitude = 3;
+  google.protobuf.Timestamp ship_deviation_started_time = 4;
+  google.protobuf.Timestamp ship_deviation_stopped_time = 5;
+}
+
+message SpeedAndDistance {
+  double distance_through_water = 1;
+  double distance_over_ground = 2;
+  double distance_sailed_in_ice = 3;
+  double distance_to_next_port = 4;
+  double distance_to_next_waypoint = 5;
+  double total_distance_on_sea_passage = 6;
+  double distance_excluded = 7;
+  double speed_over_ground = 8;
+  double speed_through_water = 9;
+  double speed_propeller = 10;
+  double speed_projected = 11;
+  double speed_order = 12;
+  double slip = 13;
+  double course_over_ground = 14;
+  double ship_true_heading = 15;
+  string ship_draught = 16;
+  double draught_forward = 17;
+  double draught_aft = 18;
+  double ship_actual_deadweight_tonnage = 19;
+  double ship_maximum_deadweight = 20;
+  bool laden_indicator = 21;
+  double total_ballast_water_onboard = 22;
+}
+
+message WeatherInformation {
+  string weather_remarks = 1;
+  double bad_weather_hours = 2;
+  double bad_weather_distance = 3;
+  int32 wind_force = 4;
+  string wind_speed = 5;
+  string wind_direction = 6;
+  double wind_direction_estimated_relative = 7;
+  double wind_direction_estimated = 8;
+  double air_temperature = 9;
+  double atmospheric_pressure = 10;
+  string state_of_sea = 11;
+  double sea_direction_relative = 12;
+  double sea_direction = 13;
+  double sea_height = 14;
+  double swell_direction_relative = 15;
+  double swell_direction = 16;
+  double swell_height = 17;
+  double ocean_current_direction_relative = 18;
+  double ocean_current_direction = 19;
+  double ocean_current_direction_weather_provider = 20;
+
+  // Compatibility fields currently present in C++/Go implementations.
+  double sea_state = 21;
+  double sea_water_temperature = 22;
+  double barometric_pressure = 23;
+  string weather_description = 24;
+}
+
+message FreshWater {
+  double fresh_water_bunkered = 1;
+  double fresh_water_produced = 2;
+  double fresh_water_consumed = 3;
+  double technical_water_produced = 4;
+  double technical_water_consumed = 5;
+  double wash_water_consumed = 6;
+  double fresh_water_remaining = 7;
+}
+
+message ElectricityConsumption {
+  double boiler_electricity_consumption = 1;
+  double generator_production = 2;
+  double offset_electricity_consumption = 3;
+  double power_consumption_for_plant = 4;
+  double electrical_for_cargo_cooling = 5;
+  double electrical_for_discharge_pump = 6;
+  double electrical_for_reefer_containers = 7;
+  double electrical_from_on_shore_power_supply = 8;
+  double electrical_from_zero_emissions_technologies = 9;
+  string fuel_type_used_for_cargo_cooling = 10;
+  string fuel_type_used_for_discharge_pump = 11;
+  string fuel_type_used_for_reefer_containers = 12;
+  double fuel_oil_consumption_for_cargo_cooling = 13;
+  double fuel_oil_consumption_for_discharge_pump = 14;
+  double fuel_oil_consumption_for_reefer_containers = 15;
+}
+
+message CargoInformation {
+  string cargo_description = 1;
+  double gross_weight = 2;
+  double gross_volume = 3;
+  string bill_of_lading_reference = 4;
+  google.protobuf.Timestamp bill_of_lading_issued_date = 5;
+  int32 total_containers_teu = 6;
+  int32 total_full_containers_teu = 7;
+  int32 total_full_reefer_containers_teu = 8;
+  int32 reefer_sockets_in_use = 9;
+  int32 chilled_20_ft_reefer_containers = 10;
+  int32 chilled_40_ft_reefer_containers = 11;
+  int32 frozen_20_ft_reefer_containers = 12;
+  int32 frozen_40_ft_reefer_containers = 13;
+  int32 total_vehicles_ceu = 14;
+}
+
+message FuelAndBunkerInformation {
+  string fuel_type = 1;
+  string fuel_type_trade_name = 2;
+  string bunker_delivery_note_number = 3;
+  google.protobuf.Timestamp bunker_delivery_date_time = 4;
+  string fuel_proof_of_sustainability_reference = 5;
+  double fuel_bunkered = 6;
+  double fuel_mass = 7;
+  double fuel_density = 8;
+  double fuel_sulphur_content = 9;
+  double fuel_viscosity = 10;
+  double fuel_water_content = 11;
+  double fuel_higher_heating_value = 12;
+  double fuel_lower_heating_value = 13;
+  string fuel_calorific_value_reporting_scheme_code = 14;
+  double fuel_lower_calorific_value = 15;
+  string fuel_grade = 16;
+  double fuel_ghg_intensity_imo_manual = 17;
+  double fuel_ghg_intensity_imo_voyage = 18;
+  string fuel_bunker_port = 19;
+  string fuel_bunker_port_name = 20;
+  double fuel_carbon_dioxide_emission = 21;
+  double total_fuel_consumed = 22;
+  double fuel_consumed_by_main_engine = 23;
+  double fuel_consumed_by_diesel_electric_propulsion = 24;
+  double fuel_consumed_by_diesel_generator = 25;
+  double fuel_consumed_by_auxiliary_boiler = 26;
+  double fuel_consumed_by_auxiliary_engine = 27;
+  double fuel_consumed_by_cargo_heating = 28;
+  double fuel_consumed_by_reefer_containers = 29;
+  double fuel_consumed_by_discharge_pump = 30;
+  double fuel_consumed_by_other_devices = 31;
+  double fuel_remaining_on_board = 32;
+  double sludge_remaining_on_board = 33;
+}
+
+message Emissions {
+  double total_co2 = 1;
+  double total_co2_percentage = 2;
+  double total_co2_tank_to_wake = 3;
+  double total_co2_captured = 4;
+  double total_ch4 = 5;
+  double total_ch4_converted_to_co2 = 6;
+  double total_n2o = 7;
+  double total_n2o_converted_to_co2 = 8;
+  double ch4_emission_conversion_factor = 9;
+  double n2o_emission_conversion_factor = 10;
+}
+
+message CylinderLubeOilInformation {
+  double remaining_on_board = 1;
+  double feed_rate = 2;
+  double consumption = 3;
+  double received_during_bunkering = 4;
+}
