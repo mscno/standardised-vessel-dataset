@@ -10,7 +10,9 @@ defmodule SVD.Utils.CaseConverter do
     "rob" => "ROB",
     "teu" => "TEU",
     "feu" => "FEU",
+    "ceu" => "CEU",
     "vts" => "VTS",
+    "ghg" => "GHG",
     "co2" => "CO2",
     "ch4" => "CH4",
     "n2o" => "N2O"

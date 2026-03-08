@@ -1,0 +1,49 @@
+{
+  "id": "valid_csv_escaping",
+  "description": "Valid dataset with commas, quotes, and newlines to verify CSV/XML escaping and round-trip parsing.",
+  "expect": {
+    "valid": true
+  },
+  "assertions": {
+    "json_paths": {
+      "general.shipName": "MV \"Escape\", Alpha\nLine",
+      "general.operationDescription": "Loading, discharge, and \"special\" handling",
+      "portAndRoute.departurePortName": "Port \"A\", Terminal 1",
+      "portAndRoute.arrivalPortName": "Port B\nBerth 22",
+      "cargo.cargoDescription": "Frozen goods, \"reefers\", and mixed cargo"
+    },
+    "xml_paths": {
+      "StandardisedVesselDataset/General/ShipName": "MV \"Escape\", Alpha\nLine",
+      "StandardisedVesselDataset/General/OperationDescription": "Loading, discharge, and \"special\" handling",
+      "StandardisedVesselDataset/PortAndRoute/DeparturePortName": "Port \"A\", Terminal 1",
+      "StandardisedVesselDataset/PortAndRoute/ArrivalPortName": "Port B\nBerth 22",
+      "StandardisedVesselDataset/Cargo/CargoDescription": "Frozen goods, \"reefers\", and mixed cargo"
+    },
+    "csv_fields": {
+      "ShipName": "MV \"Escape\", Alpha\nLine",
+      "OperationDescription": "Loading, discharge, and \"special\" handling",
+      "DeparturePortName": "Port \"A\", Terminal 1",
+      "ArrivalPortName": "Port B\nBerth 22",
+      "CargoDescription": "Frozen goods, \"reefers\", and mixed cargo"
+    }
+  },
+  "dataset": {
+    "general": {
+      "eventType": "NOON",
+      "operationType": "SAILING",
+      "operationDescription": "Loading, discharge, and \"special\" handling",
+      "shipName": "MV \"Escape\", Alpha\nLine",
+      "imo": "9876543",
+      "shipReportingDate": "2025-01-02T15:04:05Z"
+    },
+    "portAndRoute": {
+      "departurePortCode": "SGSIN",
+      "departurePortName": "Port \"A\", Terminal 1",
+      "arrivalPortCode": "NLRTM",
+      "arrivalPortName": "Port B\nBerth 22"
+    },
+    "cargo": {
+      "cargoDescription": "Frozen goods, \"reefers\", and mixed cargo"
+    }
+  }
+}

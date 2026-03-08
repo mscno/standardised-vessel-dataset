@@ -17,7 +17,11 @@ import { WeatherInformation } from './WeatherInformation'
  */
 export type StandardisedVesselDataset = {
     General: GeneralInformation
-    PortInformation: PortInformation,
+    PortAndRoute: PortInformation,
+    /**
+     * @deprecated Use PortAndRoute. Kept for backward compatibility.
+     */
+    PortInformation?: PortInformation,
     ArrivalTimes: ArrivalTimes,
     DeviationFromPlanned: DeviationFromPlanned,
     SpeedAndDistance: SpeedAndDistance

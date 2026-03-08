@@ -35,4 +35,20 @@ func TestGeneralInformationValidator(t *testing.T) {
 			t.Fatalf("expected 4 errors, got %d (%+v)", len(errs), errs)
 		}
 	})
+
+	t.Run("invalid_non_numeric_imo", func(t *testing.T) {
+		errs := validator.Validate(&models.GeneralInformation{
+			Imo:               "12A4567",
+			ShipName:          "MV Test",
+			ShipReportingDate: time.Now().UTC(),
+		})
+
+		if len(errs) != 1 {
+			t.Fatalf("expected 1 error, got %d (%+v)", len(errs), errs)
+		}
+
+		if errs[0].Field != "General.Imo" || errs[0].Message != "Imo must be seven digits." {
+			t.Fatalf("unexpected error: %+v", errs[0])
+		}
+	})
 }

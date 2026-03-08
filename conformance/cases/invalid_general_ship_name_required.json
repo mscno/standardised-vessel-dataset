@@ -1,0 +1,16 @@
+{
+  "id": "invalid_general_ship_name_required",
+  "description": "General.ShipName is required.",
+  "expect": {
+    "valid": false
+  },
+  "dataset": {
+    "general": {
+      "eventType": "NOON",
+      "operationType": "SAILING",
+      "imo": "9876543",
+      "shipName": "",
+      "shipReportingDate": "2025-01-02T15:04:05Z"
+    }
+  }
+}

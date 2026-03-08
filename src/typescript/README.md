@@ -1,43 +1,41 @@
 ## Installation
 
-**Npm**
-
 ```bash
 npm install standardised-vessel-dataset
 ```
 
-**Yarn**
-
-```bash
-yarn add standardised-vessel-dataset
-```
-
 ## Usage
 
-To get started with the library, you can use the following code snippet:
-
 ```typescript
-import { GeneralInformation, PortInformation } from 'standardised-vessel-dataset'
+import {
+  StandardisedVesselDatasetValidator,
+  SvdJsonExporter,
+  SvdXmlExporter,
+  SvdCsvExporter,
+} from "standardised-vessel-dataset";
 
-function App() {
-    const general: GeneralInformation = {
-        EventType: 'Noon Report'
-        OperationType: 'Sailing',
-        ShipReportingDate: new Date('2024-03-04T10:00:00Z'),
-        ShipName: 'Ship name',
-        Imo: '1234567',
-        ShipType: 'Container Ship',
-        VoyageNumber: 'Voy123',
-        VoyageLegIdentifier: 'Leg1',
-        VoyageLegRemarks: 'Some remarks about the vessel',
-    }
+const dataset = {
+  general: {
+    eventType: "NOON",
+    operationType: "SAILING",
+    shipName: "MV Example",
+    imo: "9876543",
+    shipReportingDate: "2025-01-02T15:04:05Z",
+  },
+};
 
-    const portInfo: PortInformation = {
-        DeparturePortCode: 'BCN',
-        DeparturePortDescription: 'Barcelona, Spain',
-        ArrivalPortCode: 'LIS',
-        ArrivalPortDescription: 'Lisbon, Portugal'
-        DepartureDateTime: new Date('2024-03-05T12:00:00Z')
-    }
+const validator = new StandardisedVesselDatasetValidator();
+const errors = validator.validate(dataset);
+
+if (errors.length > 0) {
+  console.error(errors);
+} else {
+  const json = new SvdJsonExporter().export(dataset);
+  const xml = new SvdXmlExporter().export(dataset);
+  const csv = new SvdCsvExporter().export(dataset);
+
+  console.log(json.fileName, json.contentType);
+  console.log(xml.fileName, xml.contentType);
+  console.log(csv.fileName, csv.contentType);
 }
 ```

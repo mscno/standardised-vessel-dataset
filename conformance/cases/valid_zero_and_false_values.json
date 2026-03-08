@@ -1,0 +1,52 @@
+{
+  "id": "valid_zero_and_false_values",
+  "description": "Valid dataset asserting zero numeric values and false booleans are preserved across exports.",
+  "expect": {
+    "valid": true
+  },
+  "assertions": {
+    "json_paths": {
+      "general.numberOfPassengers": 0,
+      "general.numberOfCrew": 0,
+      "speedAndDistance.distanceOverGround": 0,
+      "speedAndDistance.speedOverGround": 0,
+      "speedAndDistance.ladenIndicator": false,
+      "emissions.totalCo2": 0
+    },
+    "xml_paths": {
+      "StandardisedVesselDataset/General/NumberOfPassengers": "0",
+      "StandardisedVesselDataset/General/NumberOfCrew": "0",
+      "StandardisedVesselDataset/SpeedAndDistance/DistanceOverGround": "0",
+      "StandardisedVesselDataset/SpeedAndDistance/SpeedOverGround": "0",
+      "StandardisedVesselDataset/SpeedAndDistance/LadenIndicator": "false",
+      "StandardisedVesselDataset/Emissions/TotalCo2": "0"
+    },
+    "csv_fields": {
+      "NumberOfPassengers": "0",
+      "NumberOfCrew": "0",
+      "DistanceOverGround": "0",
+      "SpeedOverGround": "0",
+      "LadenIndicator": "False",
+      "TotalCo2": "0"
+    }
+  },
+  "dataset": {
+    "general": {
+      "eventType": "NOON",
+      "operationType": "SAILING",
+      "shipName": "MV Zero",
+      "imo": "9876543",
+      "shipReportingDate": "2025-01-02T15:04:05Z",
+      "numberOfPassengers": 0,
+      "numberOfCrew": 0
+    },
+    "speedAndDistance": {
+      "distanceOverGround": 0,
+      "speedOverGround": 0,
+      "ladenIndicator": false
+    },
+    "emissions": {
+      "totalCo2": 0
+    }
+  }
+}

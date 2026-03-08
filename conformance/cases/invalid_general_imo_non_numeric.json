@@ -1,0 +1,14 @@
+{
+  "id": "invalid_general_imo_non_numeric",
+  "description": "IMO must contain only digits even when length is seven.",
+  "expect": {
+    "valid": false
+  },
+  "dataset": {
+    "general": {
+      "imo": "12A4567",
+      "shipName": "MV Invalid IMO",
+      "shipReportingDate": "2025-01-02T15:04:05Z"
+    }
+  }
+}

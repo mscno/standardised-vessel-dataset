@@ -59,6 +59,17 @@ jobs:
         working-directory: src/elixir/svd
         run: mix test
 
+  rust-tests:
+    name: Rust Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Run Rust tests
+        run: cargo test --manifest-path src/rust/svd/Cargo.toml
+
   cpp-tests:
     name: C++ Tests
     runs-on: ubuntu-latest
@@ -90,6 +101,7 @@ jobs:
           yarn install
           yarn clean
           yarn build
+          yarn test
 
   protobuf-validate:
     name: Protobuf Schema Validation
@@ -113,7 +125,7 @@ jobs:
   conformance-parity:
     name: Conformance Parity
     runs-on: ubuntu-latest
-    needs: [go-tests, dotnet-tests, elixir-tests]
+    needs: [go-tests, dotnet-tests, elixir-tests, rust-tests, typescript-build]
     steps:
       - uses: actions/checkout@v4
 
@@ -134,6 +146,12 @@ jobs:
           otp-version: '27.0'
           elixir-version: '1.17.3'
 
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.11.1'
+
       - name: Install Elixir dependencies
         working-directory: src/elixir/svd
         run: |
@@ -142,7 +160,7 @@ jobs:
           mix deps.get
 
       - name: Run conformance parity suite
-        run: python3 conformance/runner.py --adapters go,dotnet,elixir
+        run: python3 conformance/runner.py --adapters go,dotnet,elixir,rust,typescript
 
   conformance-benchmark:
     name: Conformance Benchmark
@@ -168,6 +186,12 @@ jobs:
           otp-version: '27.0'
           elixir-version: '1.17.3'
 
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.11.1'
+
       - name: Install Elixir dependencies
         working-directory: src/elixir/svd
         run: |
@@ -176,4 +200,4 @@ jobs:
           mix deps.get
 
       - name: Run benchmark suite
-        run: python3 conformance/benchmark.py --adapters go,dotnet,elixir --iterations 200
+        run: python3 conformance/benchmark.py --adapters go,dotnet,elixir,rust,typescript --iterations 200

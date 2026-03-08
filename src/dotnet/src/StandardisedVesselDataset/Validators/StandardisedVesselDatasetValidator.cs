@@ -7,7 +7,10 @@ public class StandardisedVesselDatasetValidator : AbstractValidator<Models.Stand
 {
     public StandardisedVesselDatasetValidator()
     {
-        RuleFor(nr => nr.General).SetValidator(new GeneralValidator());
+        RuleFor(nr => nr.General)
+            .NotNull()
+            .WithMessage("General is required")
+            .SetValidator(new GeneralValidator());
 
         //extend validation rules
     }

@@ -1,0 +1,16 @@
+{
+  "id": "invalid_general_imo_length",
+  "description": "IMO must be exactly seven digits.",
+  "expect": {
+    "valid": false
+  },
+  "dataset": {
+    "general": {
+      "eventType": "NOON",
+      "operationType": "SAILING",
+      "imo": "123",
+      "shipName": "MV Invalid IMO",
+      "shipReportingDate": "2025-01-02T15:04:05Z"
+    }
+  }
+}

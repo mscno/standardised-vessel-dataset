@@ -1,0 +1,31 @@
+{
+  "id": "valid_required_fields_only",
+  "description": "Minimal payload with only required General fields should validate and export.",
+  "expect": {
+    "valid": true
+  },
+  "assertions": {
+    "json_paths": {
+      "general.shipName": "MV Minimal",
+      "general.imo": "9876543",
+      "general.shipReportingDate": "2025-01-02T15:04:05Z"
+    },
+    "xml_paths": {
+      "StandardisedVesselDataset/General/ShipName": "MV Minimal",
+      "StandardisedVesselDataset/General/Imo": "9876543",
+      "StandardisedVesselDataset/General/ShipReportingDate": "2025-01-02T15:04:05Z"
+    },
+    "csv_fields": {
+      "ShipName": "MV Minimal",
+      "Imo": "9876543",
+      "ShipReportingDate": "2025-01-02T15:04:05.0000000Z"
+    }
+  },
+  "dataset": {
+    "general": {
+      "shipName": "MV Minimal",
+      "imo": "9876543",
+      "shipReportingDate": "2025-01-02T15:04:05Z"
+    }
+  }
+}

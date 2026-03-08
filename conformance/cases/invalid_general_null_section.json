@@ -1,0 +1,10 @@
+{
+  "id": "invalid_general_null_section",
+  "description": "Dataset with null General section should fail validation.",
+  "expect": {
+    "valid": false
+  },
+  "dataset": {
+    "general": null
+  }
+}

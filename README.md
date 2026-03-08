@@ -26,6 +26,7 @@ This library provides implementations in multiple programming languages to suppo
 - **.NET Core**: Full-featured .NET implementation with extensive validation and export capabilities
 - **Go**: Go implementation with exporters, validators, and service provider support
 - **Elixir**: Elixir implementation with model parity, validators, exporters, and high test coverage
+- **Rust**: Rust implementation and conformance adapter with validation, export, and benchmark support
 - **TypeScript**: Type-safe JavaScript implementation for web and Node.js environments
 
 
@@ -40,15 +41,16 @@ language, you can find instructions in the corresponding source directory:
 | .NET Core                            | [src/dotnet](src/dotnet)                                   |
 | Go                                   | [src/go/svd](src/go/svd)                                   |
 | Elixir                               | [src/elixir/svd](src/elixir/svd)                           |
+| Rust                                 | [src/rust/svd](src/rust/svd)                               |
 | TypeScript                           | [src/typescript](src/typescript)                           |
 
 ## Features
 
-| Feature                                         | C++ | .NET Core | Go | Elixir | TypeScript |
-| ----------------------------------------------- | :-: | :-------: | :-: | :----: | :--------: |
-| Typified StandardisedVesselDataset (SVD) models | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Validation of SVD input data                    | ✅ | ✅ | ✅ | ✅ |  |
-| Export of data to XML, CSV, or JSON formats     | ✅ | ✅ | ✅ | ✅ |  |
+| Feature                                         | C++ | .NET Core | Go | Elixir | Rust | TypeScript |
+| ----------------------------------------------- | :-: | :-------: | :-: | :----: | :--: | :--------: |
+| Typified StandardisedVesselDataset (SVD) models | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Validation of SVD input data                    | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Export of data to XML, CSV, or JSON formats     | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ## Supported Output formats
 - XML
@@ -58,8 +60,8 @@ language, you can find instructions in the corresponding source directory:
 ## Conformance suite
 Cross-implementation parity and benchmark tooling lives under [conformance](conformance).
 
-- Parity runner: `python3 conformance/runner.py --adapters go,dotnet`
-- Benchmark runner: `python3 conformance/benchmark.py --adapters go,dotnet --iterations 200`
+- Parity runner: `python3 conformance/runner.py --adapters go,dotnet,elixir,rust,typescript`
+- Benchmark runner: `python3 conformance/benchmark.py --adapters go,dotnet,elixir,rust,typescript --iterations 200`
 - Docker and Compose usage: see [conformance/README.md](conformance/README.md)
 
 ## Contributing

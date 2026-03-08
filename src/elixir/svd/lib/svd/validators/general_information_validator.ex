@@ -4,30 +4,24 @@ defmodule SVD.Validators.GeneralInformationValidator do
   alias SVD.Models.GeneralInformation
   alias SVD.Validators.ValidationError
 
+  @minimum_ship_reporting_date ~U[0001-01-01 00:00:00Z]
+
   @spec validate(GeneralInformation.t() | nil) :: [ValidationError.t()]
   def validate(nil) do
     [
       %ValidationError{
-        field: "GeneralInformation",
-        message: "General information cannot be nil"
+        field: "General",
+        message: "General is required"
       }
     ]
   end
 
   def validate(%GeneralInformation{} = general) do
     []
-    |> validate_required_string(general.event_type, "General.EventType", "EventType is required")
-    |> validate_required_string(
-      general.operation_type,
-      "General.OperationType",
-      "OperationType is required"
-    )
-    |> validate_required_string(general.ship_name, "General.ShipName", "ShipName is required")
+    |> validate_required_string(general.imo, "General.Imo", "Imo is required")
     |> validate_imo(general.imo)
-    |> validate_ship_latitude(general.ship_latitude)
-    |> validate_ship_longitude(general.ship_longitude)
+    |> validate_required_string(general.ship_name, "General.ShipName", "Ship Name is required")
     |> validate_ship_reporting_date(general.ship_reporting_date)
-    |> validate_number_of_crew(general.number_of_crew)
   end
 
   def validate(_), do: validate(nil)
@@ -43,112 +37,66 @@ defmodule SVD.Validators.GeneralInformationValidator do
   defp validate_imo(errors, value) do
     cond do
       !is_binary(value) or String.trim(value) == "" ->
-        errors ++
-          [%ValidationError{field: "General.IMO", message: "IMO is required", value: value}]
+        errors
 
-      String.length(value) != 7 ->
+      Regex.match?(~r/^\d{7}$/, value) ->
+        errors
+
+      true ->
         errors ++
           [
             %ValidationError{
-              field: "General.IMO",
-              message: "IMO must be exactly 7 characters",
+              field: "General.Imo",
+              message: "Imo must be seven digits.",
+              value: value
+            }
+          ]
+    end
+  end
+
+  defp validate_ship_reporting_date(errors, value) do
+    case normalize_datetime(value) do
+      nil ->
+        errors ++
+          [
+            %ValidationError{
+              field: "General.ShipReportingDate",
+              message: "Ship Reporting Date (Datetime) must be greater than default.",
               value: value
             }
           ]
 
-      !Regex.match?(~r/^\d+$/, value) ->
-        errors ++
-          [%ValidationError{field: "General.IMO", message: "IMO must be numeric", value: value}]
-
-      true ->
-        errors
+      %DateTime{} = dt ->
+        if DateTime.compare(dt, @minimum_ship_reporting_date) == :gt do
+          errors
+        else
+          errors ++
+            [
+              %ValidationError{
+                field: "General.ShipReportingDate",
+                message: "Ship Reporting Date (Datetime) must be greater than default.",
+                value: value
+              }
+            ]
+        end
     end
   end
 
-  defp validate_ship_latitude(errors, nil), do: errors
+  defp normalize_datetime(%DateTime{} = value), do: value
 
-  defp validate_ship_latitude(errors, value) when is_number(value) do
-    if value < -90 or value > 90 do
-      errors ++
-        [
-          %ValidationError{
-            field: "General.ShipLatitude",
-            message: "ShipLatitude must be between -90 and 90",
-            value: value
-          }
-        ]
-    else
-      errors
+  defp normalize_datetime(%NaiveDateTime{} = value) do
+    case DateTime.from_naive(value, "Etc/UTC") do
+      {:ok, dt} -> dt
+      _ -> nil
     end
   end
 
-  defp validate_ship_latitude(errors, _), do: errors
-
-  defp validate_ship_longitude(errors, nil), do: errors
-
-  defp validate_ship_longitude(errors, value) when is_number(value) do
-    if value < -180 or value > 180 do
-      errors ++
-        [
-          %ValidationError{
-            field: "General.ShipLongitude",
-            message: "ShipLongitude must be between -180 and 180",
-            value: value
-          }
-        ]
-    else
-      errors
+  defp normalize_datetime(value) when is_binary(value) do
+    case DateTime.from_iso8601(String.trim(value)) do
+      {:ok, dt, _offset} -> dt
+      _ -> nil
     end
   end
 
-  defp validate_ship_longitude(errors, _), do: errors
-
-  defp validate_ship_reporting_date(errors, nil) do
-    errors ++
-      [
-        %ValidationError{
-          field: "General.ShipReportingDate",
-          message: "ShipReportingDate is required",
-          value: nil
-        }
-      ]
-  end
-
-  defp validate_ship_reporting_date(errors, %DateTime{} = dt) do
-    threshold = DateTime.add(DateTime.utc_now(), 24 * 60 * 60, :second)
-
-    if DateTime.compare(dt, threshold) == :gt do
-      errors ++
-        [
-          %ValidationError{
-            field: "General.ShipReportingDate",
-            message: "ShipReportingDate cannot be in the future",
-            value: dt
-          }
-        ]
-    else
-      errors
-    end
-  end
-
-  defp validate_ship_reporting_date(errors, _), do: errors
-
-  defp validate_number_of_crew(errors, nil), do: errors
-
-  defp validate_number_of_crew(errors, value) when is_integer(value) do
-    if value < 0 do
-      errors ++
-        [
-          %ValidationError{
-            field: "General.NumberOfCrew",
-            message: "NumberOfCrew cannot be negative",
-            value: value
-          }
-        ]
-    else
-      errors
-    end
-  end
-
-  defp validate_number_of_crew(errors, _), do: errors
+  defp normalize_datetime(_), do: nil
 end

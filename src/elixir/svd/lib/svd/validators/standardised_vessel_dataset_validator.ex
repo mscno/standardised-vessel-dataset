@@ -24,7 +24,7 @@ defmodule SVD.Validators.StandardisedVesselDatasetValidator do
             [
               %ValidationError{
                 field: "General",
-                message: "General information is required"
+                message: "General is required"
               }
             ]
         else

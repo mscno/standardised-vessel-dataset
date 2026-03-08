@@ -23,7 +23,7 @@ func (v *GeneralInformationValidatorImpl) Validate(general *models.GeneralInform
 	if general.Imo == "" {
 		errors = append(errors, ValidationError{Field: "General.Imo", Message: "Imo is required", Value: general.Imo})
 	}
-	if len(general.Imo) != 7 {
+	if !isSevenDigitImo(general.Imo) {
 		errors = append(errors, ValidationError{Field: "General.Imo", Message: "Imo must be seven digits.", Value: general.Imo})
 	}
 	if general.ShipName == "" {
@@ -34,4 +34,18 @@ func (v *GeneralInformationValidatorImpl) Validate(general *models.GeneralInform
 	}
 
 	return errors
+}
+
+func isSevenDigitImo(value string) bool {
+	if len(value) != 7 {
+		return false
+	}
+
+	for i := 0; i < len(value); i++ {
+		if value[i] < '0' || value[i] > '9' {
+			return false
+		}
+	}
+
+	return true
 }

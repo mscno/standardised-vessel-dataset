@@ -34,13 +34,31 @@ ADAPTER_COMMANDS: dict[str, dict[str, Any]] = {
         ],
         "cwd": ROOT / "src" / "elixir" / "svd",
     },
+    "rust": {
+        "cmd": [
+            "cargo",
+            "run",
+            "--quiet",
+            "--manifest-path",
+            "./src/rust/svd/Cargo.toml",
+        ],
+        "cwd": ROOT,
+    },
+    "typescript": {
+        "cmd": ["node", "main.mjs"],
+        "cwd": ROOT / "conformance" / "adapters" / "typescript",
+    },
 }
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run conformance benchmark suite across implementations.")
     parser.add_argument("--cases-dir", default=str(DEFAULT_CASES_DIR), help="Directory containing conformance cases.")
-    parser.add_argument("--adapters", default="go,dotnet", help="Comma separated adapter names.")
+    parser.add_argument(
+        "--adapters",
+        default="go,dotnet,elixir,rust,typescript",
+        help="Comma separated adapter names.",
+    )
     parser.add_argument("--iterations", type=int, default=100, help="Benchmark iterations per case and operation.")
     parser.add_argument(
         "--allow-missing-adapters",

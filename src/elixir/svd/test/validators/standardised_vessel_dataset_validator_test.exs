@@ -17,7 +17,7 @@ defmodule SVD.Validators.StandardisedVesselDatasetValidatorTest do
 
     assert Enum.any?(
              errors,
-             &(&1.field == "General" and &1.message == "General information is required")
+             &(&1.field == "General" and &1.message == "General is required")
            )
   end
 
@@ -29,10 +29,9 @@ defmodule SVD.Validators.StandardisedVesselDatasetValidatorTest do
     errors = StandardisedVesselDatasetValidator.validate(Faker.invalid_svd())
     messages = Enum.map(errors, & &1.message)
 
-    assert "EventType is required" in messages
-    assert "OperationType is required" in messages
-    assert "ShipName is required" in messages
-    assert "IMO is required" in messages
+    assert "Ship Name is required" in messages
+    assert "Imo is required" in messages
+    assert "Ship Reporting Date (Datetime) must be greater than default." in messages
   end
 
   test "validate minimal valid svd" do

@@ -60,10 +60,12 @@ defmodule SVD.Serializers do
         xml_key = DotNetWire.xml_field_name(field)
 
         raw_value =
-          Map.get(section_payload, json_key) ||
-            Map.get(section_payload, xml_key) ||
-            Map.get(section_payload, field) ||
-            Map.get(section_payload, Atom.to_string(field))
+          first_present_map_value(section_payload, [
+            json_key,
+            xml_key,
+            field,
+            Atom.to_string(field)
+          ])
 
         Map.put(acc, field, DotNetWire.parse_value(raw_value, type, :json))
       end)
@@ -72,4 +74,19 @@ defmodule SVD.Serializers do
   end
 
   defp parse_json_section(_section_payload, _section), do: nil
+
+  defp first_present_map_value(map, keys) do
+    keys
+    |> Enum.find_value(fn key ->
+      if Map.has_key?(map, key) do
+        {:present, Map.get(map, key)}
+      else
+        nil
+      end
+    end)
+    |> case do
+      {:present, value} -> value
+      nil -> nil
+    end
+  end
 end

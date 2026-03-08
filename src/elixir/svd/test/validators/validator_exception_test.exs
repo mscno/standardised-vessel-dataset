@@ -13,14 +13,14 @@ defmodule SVD.Validators.ValidatorExceptionTest do
     exception =
       %ValidatorException{
         errors: [
-          %ValidationError{field: "General.IMO", message: "IMO is required"},
-          %ValidationError{field: "General.ShipName", message: "ShipName is required"}
+          %ValidationError{field: "General.Imo", message: "Imo is required"},
+          %ValidationError{field: "General.ShipName", message: "Ship Name is required"}
         ]
       }
 
     message = Exception.message(exception)
-    assert String.contains?(message, "General.IMO: IMO is required")
-    assert String.contains?(message, "General.ShipName: ShipName is required")
+    assert String.contains?(message, "General.Imo: Imo is required")
+    assert String.contains?(message, "General.ShipName: Ship Name is required")
     assert ValidatorException.has_errors?(exception)
   end
 end

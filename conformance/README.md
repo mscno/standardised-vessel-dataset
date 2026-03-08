@@ -9,6 +9,8 @@ This folder contains a shared cross-implementation suite for SVD parity checks a
   - `conformance/adapters/go`
   - `conformance/adapters/dotnet/Conformance.Adapter`
   - `conformance/adapters/elixir/adapter.exs`
+  - `conformance/adapters/typescript/main.mjs`
+  - `src/rust/svd` (Cargo adapter binary)
 - One parity runner that executes the same cases against each adapter and compares canonicalized outputs:
   - `conformance/runner.py`
 - One benchmark runner that executes the same valid cases and reports average per-operation timings:
@@ -19,23 +21,23 @@ This folder contains a shared cross-implementation suite for SVD parity checks a
 From repository root:
 
 ```bash
-python3 conformance/runner.py --adapters go,dotnet
+python3 conformance/runner.py --adapters go,dotnet,elixir,rust,typescript
 ```
 
 ```bash
-python3 conformance/benchmark.py --adapters go,dotnet --iterations 200
+python3 conformance/benchmark.py --adapters go,dotnet,elixir,rust,typescript --iterations 200
 ```
 
-If one runtime is missing on your machine, run only the available adapter:
+If one runtime is missing on your machine, run only the available adapters:
 
 ```bash
-python3 conformance/runner.py --adapters go
+python3 conformance/runner.py --adapters go,rust,typescript
 ```
 
-To include Elixir in local runs:
+To target only a subset of runtimes:
 
 ```bash
-python3 conformance/runner.py --adapters go,dotnet,elixir
+python3 conformance/runner.py --adapters go,dotnet,rust,typescript
 ```
 
 The Elixir implementation requires Elixir `~> 1.15` (see `src/elixir/svd/mix.exs`).
@@ -52,7 +54,7 @@ docker run --rm svd-conformance
 Run benchmark in Docker:
 
 ```bash
-docker run --rm svd-conformance python3 conformance/benchmark.py --adapters go,dotnet --iterations 200
+docker run --rm svd-conformance python3 conformance/benchmark.py --adapters go,dotnet,rust,typescript --iterations 200
 ```
 
 ## Docker Compose usage
@@ -80,6 +82,12 @@ Optional:
 - `parity.validate`: enable/disable strict cross-adapter validation parity
 - `parity.exports`: enable/disable strict cross-adapter export parity
 - `assertions`: adapter-agnostic assertions for valid export content
+  - `assertions.json_paths`: assert JSON export values by dotted path
+  - `assertions.xml_paths`: assert XML leaf values by slash path
+  - `assertions.csv_fields`: assert CSV values by short field name
+  - `assertions.json_equals_dataset`: when `true`, assert every JSON leaf provided in `dataset`
+    matches each adapter JSON export (excluding known representational exceptions like
+    `general.elapsedTime`)
 
 ## Notes
 

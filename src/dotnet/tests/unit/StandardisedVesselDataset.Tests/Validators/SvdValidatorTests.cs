@@ -37,4 +37,24 @@ public class SvdValidatorTests
         validationResult.Errors.Should().Contain(e => e.ErrorMessage == "Imo must be seven digits.");
         validationResult.Errors.Should().Contain(e => e.ErrorMessage == "Ship Name is required");
     }
+
+    [Fact]
+    public async Task ValidateAsync_GivenNonNumericImo_ShouldValidateWithImoError()
+    {
+        var svd = new Svd
+        {
+            General = new()
+            {
+                Imo = "12A4567",
+                ShipName = "MV Example",
+                ShipReportingDate = DateTime.UtcNow,
+            },
+        };
+
+        var validationResult = await _validator.ValidateAsync(svd);
+
+        validationResult.Should().NotBeNull();
+        validationResult.IsValid.Should().BeFalse();
+        validationResult.Errors.Should().Contain(e => e.ErrorMessage == "Imo must be seven digits.");
+    }
 }

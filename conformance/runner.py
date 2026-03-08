@@ -38,6 +38,20 @@ ADAPTER_COMMANDS: dict[str, dict[str, Any]] = {
         ],
         "cwd": ROOT / "src" / "elixir" / "svd",
     },
+    "rust": {
+        "cmd": [
+            "cargo",
+            "run",
+            "--quiet",
+            "--manifest-path",
+            "./src/rust/svd/Cargo.toml",
+        ],
+        "cwd": ROOT,
+    },
+    "typescript": {
+        "cmd": ["node", "main.mjs"],
+        "cwd": ROOT / "conformance" / "adapters" / "typescript",
+    },
 }
 
 IGNORE_JSON_PATHS = {
@@ -62,8 +76,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--adapters",
-        default="go,dotnet",
-        help="Comma separated adapter names to run. Known: go,dotnet,elixir",
+        default="go,dotnet,elixir,rust,typescript",
+        help="Comma separated adapter names to run. Known: go,dotnet,elixir,rust,typescript",
     )
     parser.add_argument(
         "--allow-missing-adapters",
@@ -324,9 +338,35 @@ def json_path_value(payload: Any, path: str) -> Any:
     return current
 
 
+def flatten_json_leaf_paths(payload: Any, prefix: str = "") -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    if isinstance(payload, dict):
+        for key, value in payload.items():
+            path = f"{prefix}.{key}" if prefix else key
+            out.update(flatten_json_leaf_paths(value, path))
+        return out
+
+    if isinstance(payload, list):
+        # No list fields currently exist in SVD dataset.
+        for index, value in enumerate(payload):
+            path = f"{prefix}[{index}]"
+            out.update(flatten_json_leaf_paths(value, path))
+        return out
+
+    if prefix and prefix not in IGNORE_JSON_PATHS:
+        out[prefix] = payload
+    return out
+
+
 def normalize_assertion_value(value: Any) -> str:
     if isinstance(value, bool):
         return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        if isinstance(value, float):
+            if value.is_integer():
+                return str(int(value))
+            return format(value, ".15g")
+        return str(value)
     if value is None:
         return ""
     text = str(value)
@@ -350,6 +390,11 @@ def compare_assertions(case: dict[str, Any], canonical_per_adapter: dict[str, di
     json_assertions = assertions.get("json_paths", {})
     xml_assertions = assertions.get("xml_paths", {})
     csv_assertions = assertions.get("csv_fields", {})
+    json_equals_dataset = bool(assertions.get("json_equals_dataset", False))
+
+    dataset_json_assertions: dict[str, Any] = {}
+    if json_equals_dataset:
+        dataset_json_assertions = flatten_json_leaf_paths(case.get("dataset", {}))
 
     for adapter, canonical in canonical_per_adapter.items():
         export_json = canonical["export_json"]
@@ -361,6 +406,13 @@ def compare_assertions(case: dict[str, Any], canonical_per_adapter: dict[str, di
             if normalize_assertion_value(actual) != normalize_assertion_value(expected):
                 failures.append(
                     f"adapter={adapter}: json assertion {path} expected={expected!r} actual={actual!r}"
+                )
+
+        for path, expected in dataset_json_assertions.items():
+            actual = json_path_value(export_json.get("data", {}), path) if export_json.get("ok") else None
+            if normalize_assertion_value(actual) != normalize_assertion_value(expected):
+                failures.append(
+                    f"adapter={adapter}: json dataset parity {path} expected={expected!r} actual={actual!r}"
                 )
 
         xml_map = export_xml.get("leaf_map", {}) if export_xml.get("ok") else {}

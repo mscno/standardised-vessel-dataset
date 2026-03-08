@@ -1,0 +1,8 @@
+{
+  "id": "invalid_null_dataset",
+  "description": "Null dataset should fail validation and all exports.",
+  "expect": {
+    "valid": false
+  },
+  "dataset": null
+}

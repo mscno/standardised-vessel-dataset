@@ -48,3 +48,6 @@ conformance/venv/
 
 # Docker
 *.tar
+
+# Rust
+**/target/

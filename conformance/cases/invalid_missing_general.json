@@ -1,0 +1,8 @@
+{
+  "id": "invalid_missing_general",
+  "description": "Dataset without General section should fail validation.",
+  "expect": {
+    "valid": false
+  },
+  "dataset": {}
+}

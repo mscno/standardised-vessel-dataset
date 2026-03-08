@@ -8,13 +8,14 @@ defmodule SVD.Validators.GeneralInformationValidatorTest do
     errors = GeneralInformationValidator.validate(nil)
 
     assert length(errors) == 1
-    assert hd(errors).message == "General information cannot be nil"
+    assert hd(errors).field == "General"
+    assert hd(errors).message == "General is required"
   end
 
   test "validate unsupported general type" do
     errors = GeneralInformationValidator.validate(:invalid)
     assert length(errors) == 1
-    assert hd(errors).message == "General information cannot be nil"
+    assert hd(errors).message == "General is required"
   end
 
   test "validate valid general information" do
@@ -25,21 +26,23 @@ defmodule SVD.Validators.GeneralInformationValidatorTest do
   test "validate required fields" do
     general = %{
       Faker.valid_general_information()
-      | event_type: "",
-        operation_type: "",
-        ship_name: ""
+      | imo: "",
+        ship_name: "",
+        ship_reporting_date: nil
     }
 
     errors = GeneralInformationValidator.validate(general)
     messages = Enum.map(errors, &{&1.field, &1.message})
 
-    assert {"General.EventType", "EventType is required"} in messages
-    assert {"General.OperationType", "OperationType is required"} in messages
-    assert {"General.ShipName", "ShipName is required"} in messages
+    assert {"General.Imo", "Imo is required"} in messages
+    assert {"General.ShipName", "Ship Name is required"} in messages
+
+    assert {"General.ShipReportingDate",
+            "Ship Reporting Date (Datetime) must be greater than default."} in messages
   end
 
-  test "validate imo variations" do
-    invalid_imos = ["", "12345", "12345678", "ABC1234"]
+  test "validate imo must be seven digits" do
+    invalid_imos = ["12345", "12345678", "12A4567"]
 
     for imo <- invalid_imos do
       errors =
@@ -47,7 +50,10 @@ defmodule SVD.Validators.GeneralInformationValidatorTest do
         |> Map.put(:imo, imo)
         |> GeneralInformationValidator.validate()
 
-      assert Enum.any?(errors, &(&1.field == "General.IMO"))
+      assert Enum.any?(
+               errors,
+               &(&1.field == "General.Imo" and &1.message == "Imo must be seven digits.")
+             )
     end
 
     errors =
@@ -55,114 +61,46 @@ defmodule SVD.Validators.GeneralInformationValidatorTest do
       |> Map.put(:imo, "1234567")
       |> GeneralInformationValidator.validate()
 
-    refute Enum.any?(errors, &(&1.field == "General.IMO"))
+    refute Enum.any?(errors, &(&1.field == "General.Imo"))
   end
 
-  test "validate ship latitude boundaries" do
-    valid_values = [-90.0, 0.0, 90.0]
-    invalid_values = [-90.01, 90.01]
-
-    for value <- valid_values do
-      errors =
-        Faker.valid_general_information()
-        |> Map.put(:ship_latitude, value)
-        |> GeneralInformationValidator.validate()
-
-      refute Enum.any?(errors, &(&1.field == "General.ShipLatitude"))
-    end
-
-    for value <- invalid_values do
-      errors =
-        Faker.valid_general_information()
-        |> Map.put(:ship_latitude, value)
-        |> GeneralInformationValidator.validate()
-
-      assert Enum.any?(
-               errors,
-               &(&1.field == "General.ShipLatitude" and
-                   &1.message == "ShipLatitude must be between -90 and 90")
-             )
-    end
-  end
-
-  test "validate ship longitude boundaries" do
-    valid_values = [-180.0, 0.0, 180.0]
-    invalid_values = [-180.01, 180.01]
-
-    for value <- valid_values do
-      errors =
-        Faker.valid_general_information()
-        |> Map.put(:ship_longitude, value)
-        |> GeneralInformationValidator.validate()
-
-      refute Enum.any?(errors, &(&1.field == "General.ShipLongitude"))
-    end
-
-    for value <- invalid_values do
-      errors =
-        Faker.valid_general_information()
-        |> Map.put(:ship_longitude, value)
-        |> GeneralInformationValidator.validate()
-
-      assert Enum.any?(
-               errors,
-               &(&1.field == "General.ShipLongitude" and
-                   &1.message == "ShipLongitude must be between -180 and 180")
-             )
-    end
-  end
-
-  test "validate reporting date" do
-    zero_date_errors =
+  test "validate ship reporting date accepts ISO8601 string and datetime" do
+    dt_errors =
       Faker.valid_general_information()
-      |> Map.put(:ship_reporting_date, nil)
+      |> Map.put(:ship_reporting_date, DateTime.utc_now())
+      |> GeneralInformationValidator.validate()
+
+    assert dt_errors == []
+
+    string_errors =
+      Faker.valid_general_information()
+      |> Map.put(:ship_reporting_date, "2025-01-02T15:04:05Z")
+      |> GeneralInformationValidator.validate()
+
+    assert string_errors == []
+  end
+
+  test "validate ship reporting date must be greater than default and parseable" do
+    default_date_errors =
+      Faker.valid_general_information()
+      |> Map.put(:ship_reporting_date, "0001-01-01T00:00:00Z")
       |> GeneralInformationValidator.validate()
 
     assert Enum.any?(
-             zero_date_errors,
+             default_date_errors,
              &(&1.field == "General.ShipReportingDate" and
-                 &1.message == "ShipReportingDate is required")
+                 &1.message == "Ship Reporting Date (Datetime) must be greater than default.")
            )
 
-    future_date = DateTime.add(DateTime.utc_now(), 48 * 60 * 60, :second)
-
-    future_errors =
+    bad_format_errors =
       Faker.valid_general_information()
-      |> Map.put(:ship_reporting_date, future_date)
-      |> GeneralInformationValidator.validate()
-
-    assert Enum.any?(
-             future_errors,
-             &(&1.field == "General.ShipReportingDate" and
-                 &1.message == "ShipReportingDate cannot be in the future")
-           )
-  end
-
-  test "validate negative crew" do
-    errors =
-      Faker.valid_general_information()
-      |> Map.put(:number_of_crew, -5)
-      |> GeneralInformationValidator.validate()
-
-    assert Enum.any?(
-             errors,
-             &(&1.field == "General.NumberOfCrew" and
-                 &1.message == "NumberOfCrew cannot be negative")
-           )
-  end
-
-  test "validate ignores unsupported types for optional numeric fields" do
-    errors =
-      Faker.valid_general_information()
-      |> Map.put(:ship_latitude, "not-a-number")
-      |> Map.put(:ship_longitude, "not-a-number")
       |> Map.put(:ship_reporting_date, "not-a-date")
-      |> Map.put(:number_of_crew, "not-an-int")
       |> GeneralInformationValidator.validate()
 
-    refute Enum.any?(errors, &(&1.field == "General.ShipLatitude"))
-    refute Enum.any?(errors, &(&1.field == "General.ShipLongitude"))
-    refute Enum.any?(errors, &(&1.field == "General.ShipReportingDate"))
-    refute Enum.any?(errors, &(&1.field == "General.NumberOfCrew"))
+    assert Enum.any?(
+             bad_format_errors,
+             &(&1.field == "General.ShipReportingDate" and
+                 &1.message == "Ship Reporting Date (Datetime) must be greater than default.")
+           )
   end
 end

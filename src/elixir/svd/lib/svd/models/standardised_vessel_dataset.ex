@@ -105,11 +105,17 @@ defmodule SVD.Models.StandardisedVesselDataset do
     Enum.reduce(module.fields(), %{}, fn field, acc ->
       snake_key = Atom.to_string(field)
       camel_key = CaseConverter.camel(field)
+      pascal_key = CaseConverter.pascal(field)
+      acronym_camel_key = decapitalize_first(pascal_key)
 
       normalized_value =
-        Map.get(value, field) ||
-          Map.get(value, snake_key) ||
-          Map.get(value, camel_key)
+        first_present_map_value(value, [
+          field,
+          snake_key,
+          camel_key,
+          acronym_camel_key,
+          pascal_key
+        ])
 
       if is_nil(normalized_value) do
         acc
@@ -117,5 +123,26 @@ defmodule SVD.Models.StandardisedVesselDataset do
         Map.put(acc, field, normalized_value)
       end
     end)
+  end
+
+  defp decapitalize_first(<<first::utf8, rest::binary>>) do
+    <<String.downcase(<<first::utf8>>)::binary, rest::binary>>
+  end
+
+  defp decapitalize_first(<<>>), do: ""
+
+  defp first_present_map_value(map, keys) do
+    keys
+    |> Enum.find_value(fn key ->
+      if Map.has_key?(map, key) do
+        {:present, Map.get(map, key)}
+      else
+        nil
+      end
+    end)
+    |> case do
+      {:present, value} -> value
+      nil -> nil
+    end
   end
 end

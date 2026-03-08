@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -18,6 +19,10 @@ internal static class ProgramEntry
     private static readonly JsonSerializerOptions InputJsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
+        Converters =
+        {
+            new LenientTimeSpanJsonConverter(),
+        },
     };
 
     private static readonly JsonSerializerOptions OutputJsonOptions = new()
@@ -279,6 +284,56 @@ internal static class ProgramEntry
     {
         var payload = JsonSerializer.Serialize(response, OutputJsonOptions);
         await Console.Out.WriteAsync(payload);
+    }
+}
+
+internal sealed class LenientTimeSpanJsonConverter : JsonConverter<TimeSpan>
+{
+    public override TimeSpan Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.Null)
+        {
+            return TimeSpan.Zero;
+        }
+
+        if (reader.TokenType == JsonTokenType.Number)
+        {
+            if (reader.TryGetInt64(out var nanoseconds))
+            {
+                return TimeSpan.FromTicks(nanoseconds / 100);
+            }
+
+            if (reader.TryGetDouble(out var floatingNanoseconds))
+            {
+                var ticks = (long)Math.Round(floatingNanoseconds / 100.0, MidpointRounding.AwayFromZero);
+                return TimeSpan.FromTicks(ticks);
+            }
+
+            throw new JsonException("Invalid numeric value for TimeSpan.");
+        }
+
+        if (reader.TokenType == JsonTokenType.String)
+        {
+            var value = reader.GetString();
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return TimeSpan.Zero;
+            }
+
+            if (TimeSpan.TryParse(value, CultureInfo.InvariantCulture, out var parsed))
+            {
+                return parsed;
+            }
+
+            throw new JsonException($"Invalid TimeSpan value: '{value}'.");
+        }
+
+        throw new JsonException($"Unsupported token for TimeSpan: {reader.TokenType}.");
+    }
+
+    public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue(value.ToString("c", CultureInfo.InvariantCulture));
     }
 }
 
